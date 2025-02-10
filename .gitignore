@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-<<<<<<< HEAD
 
 # Environment
 .env
@@ -15,59 +14,10 @@ pids
 *.pid
 *.seed
 *.pid.lock
-=======
-/.pnp
-.pnp.js
-
-# Testing
-/coverage
-
-# Production
-/build
-/dist
-
-# Misc
-.DS_Store
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
->>>>>>> ba6b5e5b6d9c484bf0e549e0c18445e8a9f7788b
 
 # IDE
 .idea/
 .vscode/
 
-<<<<<<< HEAD
 # Misc
-.DS_Store 
-=======
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw? 
->>>>>>> ba6b5e5b6d9c484bf0e549e0c18445e8a9f7788b
