@@ -4,6 +4,9 @@ A full-stack web application for managing and tracking investments on the Binanc
 
 ## 🚀 Features
 
+## Live Link 
+https://farmannaseem.github.io/Bianance-Dashboard/
+
 ### Investment System
 - Package investments from $10 to $1280
 - Automatic package matching and merging
