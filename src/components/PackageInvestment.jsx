@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
-
-const PACKAGE_AMOUNTS = [10, 20, 40, 80, 160, 320, 640, 1280];
+import { packageService } from '../services/packageService';
 
 function PackageInvestment() {
-  const [selectedAmount, setSelectedAmount] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [packages, setPackages] = useState([]);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [activePackages, setActivePackages] = useState([]);
+  const packages = [10, 20, 40, 80, 160, 320, 640, 1280];
 
   useEffect(() => {
     fetchPackages();
@@ -15,31 +14,42 @@ function PackageInvestment() {
 
   const fetchPackages = async () => {
     try {
-      const response = await axios.get('/api/packages');
-      setPackages(response.data);
+      const packages = await packageService.getPackages();
+      setActivePackages(packages);
     } catch (error) {
       console.error('Error fetching packages:', error);
     }
   };
 
-  const handleInvest = async () => {
-    if (!selectedAmount) {
-      toast.error('Please select a package amount');
+  const handleInvest = async (amount) => {
+    setLoading(true);
+    try {
+      await packageService.createPackage(amount);
+      toast.success(`Successfully invested $${amount}`);
+      fetchPackages();
+    } catch (error) {
+      console.error('Investment error:', error);
+      toast.error(error.message || 'Failed to create package');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (packageId) => {
+    if (!window.confirm('Are you sure you want to delete this package?')) {
       return;
     }
 
-    setLoading(true);
+    setDeleteLoading(true);
     try {
-      const response = await axios.post('/api/packages', { amount: selectedAmount });
-      console.log('Package created:', response.data);
-      toast.success('Package created successfully');
-      setSelectedAmount(null);
-      fetchPackages(); // Refresh packages list
+      await packageService.deletePackage(packageId);
+      toast.success('Package deleted successfully');
+      fetchPackages();
     } catch (error) {
-      console.error('Investment error:', error);
-      toast.error(error.response?.data?.message || 'Failed to create package');
+      console.error('Delete error:', error);
+      toast.error(error.message || 'Failed to delete package');
     } finally {
-      setLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -47,36 +57,52 @@ function PackageInvestment() {
     <div className="card">
       <div className="card-body">
         <h5 className="card-title">Investment Packages</h5>
-        <div className="row g-3 mb-3">
-          {PACKAGE_AMOUNTS.map((amount) => (
+        <div className="row g-3">
+          {packages.map((amount) => (
             <div key={amount} className="col-md-3">
-              <div 
-                className={`package-card ${selectedAmount === amount ? 'selected' : ''}`}
-                onClick={() => setSelectedAmount(amount)}
-              >
-                <h3>${amount}</h3>
-                {amount === 80 && <span className="badge bg-warning">No Withdrawal</span>}
+              <div className="card h-100">
+                <div className="card-body text-center">
+                  <h5 className="card-title">${amount}</h5>
+                  {amount === 80 && <div className="badge bg-warning mb-2">No Withdrawal</div>}
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleInvest(amount)}
+                    disabled={loading}
+                  >
+                    {loading ? 'Processing...' : 'Invest Now'}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
-        <button
-          className="btn btn-primary w-100"
-          onClick={handleInvest}
-          disabled={loading || !selectedAmount}
-        >
-          {loading ? 'Processing...' : 'Invest Now'}
-        </button>
 
-        {packages.length > 0 && (
+        {activePackages.length > 0 && (
           <div className="mt-4">
             <h6>Your Active Packages</h6>
             <div className="list-group">
-              {packages.filter(p => p.status === 'ACTIVE').map((pkg) => (
-                <div key={pkg._id} className="list-group-item">
+              {activePackages.map((pkg) => (
+                <div key={pkg.id} className="list-group-item">
                   <div className="d-flex justify-content-between align-items-center">
-                    <span>${pkg.amount}</span>
-                    <span className="badge bg-primary">{pkg.status}</span>
+                    <div>
+                      <strong>${pkg.amount}</strong>
+                      <small className="text-muted ms-2">
+                        Created: {new Date(pkg.createdAt).toLocaleDateString()}
+                      </small>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <span className="badge bg-success me-2">
+                        Earnings: ${pkg.earnings.toFixed(2)}
+                      </span>
+                      <span className="badge bg-primary me-2">{pkg.status}</span>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleDelete(pkg.id)}
+                        disabled={deleteLoading}
+                      >
+                        {deleteLoading ? '...' : '×'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}

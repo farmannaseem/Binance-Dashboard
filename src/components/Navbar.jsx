@@ -1,41 +1,54 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
 
 function Navbar() {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+    setMenuOpen(false);
+  };
+
+  const handleToggle = () => {
+    setMenuOpen((prev) => !prev);
+  };
+
+  const handleNavLinkClick = () => {
+    setMenuOpen(false);
   };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
       <div className="container">
-        <Link className="navbar-brand" to="/">
+        <Link className="navbar-brand" to="/" onClick={handleNavLinkClick}>
           Binance Dashboard
         </Link>
         <button
           className="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded={menuOpen}
+          aria-label="Toggle navigation"
+          onClick={handleToggle}
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className={`collapse navbar-collapse${menuOpen ? ' show' : ''}`} id="navbarNav">
           <ul className="navbar-nav me-auto">
             {isAuthenticated && (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                  <Link className="nav-link" to="/dashboard" onClick={handleNavLinkClick}>Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/portfolio">Portfolio</Link>
+                  <Link className="nav-link" to="/portfolio" onClick={handleNavLinkClick}>Portfolio</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/trading">Trading</Link>
+                  <Link className="nav-link" to="/trading" onClick={handleNavLinkClick}>Trading</Link>
                 </li>
               </>
             )}
@@ -44,10 +57,10 @@ function Navbar() {
             {!isAuthenticated ? (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/login">Login</Link>
+                  <Link className="nav-link" to="/login" onClick={handleNavLinkClick}>Login</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/register">Register</Link>
+                  <Link className="nav-link" to="/register" onClick={handleNavLinkClick}>Register</Link>
                 </li>
               </>
             ) : (

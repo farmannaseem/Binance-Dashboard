@@ -6,23 +6,24 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchUserData();
-    } else {
-      setLoading(false);
-    }
+    checkAuth();
   }, []);
 
-  const fetchUserData = async () => {
+  const checkAuth = async () => {
     try {
-      const response = await axios.get('/api/auth/me');
-      setUser(response.data);
+      const token = localStorage.getItem('token');
+      if (token) {
+        const response = await axios.get('/auth/me');
+        setUser(response.data);
+        setIsAuthenticated(true);
+      }
     } catch (error) {
-      console.error('Error fetching user data:', error);
       localStorage.removeItem('token');
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -30,13 +31,21 @@ export function AuthProvider({ children }) {
 
   const login = async (credentials) => {
     try {
-      const response = await axios.post('/api/auth/login', credentials);
+      console.log('AuthContext login attempt with:', credentials);
+      const response = await axios.post('/auth/login', credentials);
+      console.log('Login response:', response);
+      
+      if (!response.data || !response.data.token) {
+        throw new Error('Invalid response format');
+      }
+
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       setUser(user);
+      setIsAuthenticated(true);
       return user;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error in context:', error);
       throw error;
     }
   };
@@ -44,6 +53,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   return (
@@ -51,10 +61,9 @@ export function AuthProvider({ children }) {
       value={{
         user,
         loading,
+        isAuthenticated,
         login,
         logout,
-        isAuthenticated: !!user,
-        fetchUserData
       }}
     >
       {!loading && children}

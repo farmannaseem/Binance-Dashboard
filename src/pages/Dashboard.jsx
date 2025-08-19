@@ -1,80 +1,53 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
 import WalletConnection from '../components/WalletConnection';
 import TokenTracker from '../components/TokenTracker';
 import GasFeeMonitor from '../components/GasFeeMonitor';
 import PackageInvestment from '../components/PackageInvestment';
 import Withdrawal from '../components/Withdrawal';
 import TransactionHistory from '../components/TransactionHistory';
+import { marketService } from '../services/marketService';
+import { useAuth } from '../context/AuthContext';
 
 function Dashboard() {
   const [marketData, setMarketData] = useState({
     btcPrice: 0,
     ethPrice: 0,
     volume24h: 0,
+    recentTrades: []
   });
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [account, setAccount] = useState(null);
 
   useEffect(() => {
-    const fetchMarketData = async () => {
-      try {
-        const response = await axios.get('/api/market/overview');
-        if (response.data) {
-          setMarketData({
-            btcPrice: response.data.btcPrice || 0,
-            ethPrice: response.data.ethPrice || 0,
-            volume24h: response.data.volume24h || 0,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching market data:', error);
-        toast.error('Failed to fetch market data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchMarketData();
-    // Set up interval to fetch data every minute
-    const interval = setInterval(fetchMarketData, 60000);
+    const interval = setInterval(fetchMarketData, 60000); // Update every minute
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          return;
-        }
+  const fetchMarketData = async () => {
+    try {
+      const [btcPrice, ethPrice, volume24h, recentTrades] = await Promise.all([
+        marketService.getBitcoinPrice(),
+        marketService.getEthereumPrice(),
+        marketService.get24hVolume(),
+        marketService.getRecentTrades()
+      ]);
 
-        const response = await axios.get('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        if (response.data) {
-          setUser(response.data);
-          setAccount(response.data.address);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        if (error.response?.status === 401) {
-          // Handle unauthorized access
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        } else {
-          toast.error('Failed to fetch user data');
-        }
-      }
-    };
-
-    fetchUserData();
-  }, []);
+      setMarketData({
+        btcPrice,
+        ethPrice,
+        volume24h,
+        recentTrades
+      });
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+      toast.error('Failed to fetch market data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatNumber = (num) => {
     return (num || 0).toLocaleString(undefined, {
@@ -146,9 +119,24 @@ function Dashboard() {
             <div className="card-body">
               <h5 className="card-title">Recent Trades</h5>
               <div className="list-group">
-                <div className="text-center text-muted py-3">
-                  No recent trades
-                </div>
+                {marketData.recentTrades.length > 0 ? (
+                  marketData.recentTrades.map(trade => (
+                    <div key={trade.id} className="list-group-item">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span className={`badge bg-${trade.type === 'buy' ? 'success' : 'danger'}`}>
+                          {trade.type.toUpperCase()}
+                        </span>
+                        <span>{trade.amount}</span>
+                        <span>{trade.price}</span>
+                        <small className="text-muted">{trade.time}</small>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted py-3">
+                    No recent trades
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -160,7 +148,7 @@ function Dashboard() {
           <PackageInvestment />
         </div>
         <div className="col-md-4">
-          <Withdrawal earnings={user?.earnings || 0} onWithdraw={() => fetchUserData()} />
+          <Withdrawal />
         </div>
       </div>
 

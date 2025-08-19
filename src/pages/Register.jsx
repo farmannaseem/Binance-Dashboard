@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -12,21 +12,15 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('/api/auth/register', formData);
+      const response = await axios.post('/auth/register', formData);
       toast.success('Registration successful! Please login.');
       navigate('/login');
     } catch (error) {
+      console.error('Registration error:', error);
       toast.error(error.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
@@ -46,8 +40,9 @@ function Register() {
                 className="form-control"
                 name="name"
                 value={formData.name}
-                onChange={handleChange}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
+                autoComplete="name"
               />
             </div>
             <div className="mb-3">
@@ -57,8 +52,9 @@ function Register() {
                 className="form-control"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
                 required
+                autoComplete="email"
               />
             </div>
             <div className="mb-3">
@@ -68,8 +64,10 @@ function Register() {
                 className="form-control"
                 name="password"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
+                autoComplete="new-password"
+                minLength="6"
               />
             </div>
             <button
@@ -77,7 +75,7 @@ function Register() {
               className="btn btn-primary w-100"
               disabled={loading}
             >
-              {loading ? 'Loading...' : 'Register'}
+              {loading ? 'Registering...' : 'Register'}
             </button>
           </form>
         </div>

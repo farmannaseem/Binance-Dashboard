@@ -9,24 +9,19 @@ function Login() {
     password: '',
   });
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const { login } = useAuth();
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      console.log('Attempting login with:', formData);
       await login(formData);
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error) {
+      console.error('Login error details:', error);
       toast.error(error.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
@@ -44,9 +39,8 @@ function Login() {
               <input
                 type="email"
                 className="form-control"
-                name="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
                 required
                 autoComplete="email"
               />
@@ -56,9 +50,8 @@ function Login() {
               <input
                 type="password"
                 className="form-control"
-                name="password"
                 value={formData.password}
-                onChange={handleChange}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
                 autoComplete="current-password"
               />
@@ -68,7 +61,7 @@ function Login() {
               className="btn btn-primary w-100"
               disabled={loading}
             >
-              {loading ? 'Loading...' : 'Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
           <div className="text-center mt-3">
