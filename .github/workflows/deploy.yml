@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 name: Deploy to GitHub Pages
+=======
+name: Deploy Backend
+>>>>>>> 81c6e94 (Add missing auth route and backend updates)
 
 on:
   push:
     branches: [ main ]
+<<<<<<< HEAD
 
 jobs:
   build-and-deploy:
@@ -35,3 +40,20 @@ jobs:
           branch: gh-pages
           folder: frontend/dist
           clean: true 
+=======
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }} 
+>>>>>>> 81c6e94 (Add missing auth route and backend updates)
